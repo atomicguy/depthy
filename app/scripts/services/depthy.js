@@ -9,13 +9,13 @@ angular.module('depthyApp').provider('depthy', function depthy() {
     depthScale: Modernizr.mobile ? 2 : 1,
   });
 
-  this.$get = function(ga, $timeout, $rootScope, $document, $window, $q, $modal, $state, StateModal, UpdateCheck) {
+  this.$get = function(ga, $timeout, $rootScope, $document, $window, $q, $state) {
 
     var leftpaneDeferred, depthy,
       history = [];
 
     function isImageInfo(info) {
-      return info && info.isShareable && info.isStoreable;
+      return info && info.isStoreable;
     }
 
     function createImageInfo(info) {
@@ -57,18 +57,9 @@ angular.module('depthyApp').provider('depthy', function depthy() {
         viewed: false,
         // views count
         views: 0,
-        sharedAs: null,
 
-        // true if it's shareable directly
-        isShareable: function() {
-          return self.state && !self.local;
-        },
-        // true if it's a user's share
-        isShared: function() {
-          return !!self.storeKey;
-        },
         isStoreable: function() {
-          return !!(self.isShareable() && self.isConfirmed() && self.thumb && self.thumb.length < 500);
+          return !!(self.isConfirmed() && self.thumb && self.thumb.length < 500);
         },
         isEmpty: function() {
           return !(self.url || self.local || self.sample || self.procesing) || self.empty;
@@ -78,7 +69,7 @@ angular.module('depthyApp').provider('depthy', function depthy() {
         },
         // returns true for images that loaded successfully in the past
         isConfirmed: function() {
-          return self.viewed || self.sample || self.isShared() && self.thumb;
+          return self.viewed || self.sample && self.thumb;
         },
         isLocal: function() {
           return !!self.local;
@@ -99,7 +90,6 @@ angular.module('depthyApp').provider('depthy', function depthy() {
         getType: function() {
           if (self.isLocal()) return 'local';
           if (self.isModified()) return 'modified';
-          if (self.isShared()) return 'shared';
           if (self.isSample()) return 'sample';
           if (self.isRemote()) return 'remote';
           return 'unknown';
@@ -115,42 +105,8 @@ angular.module('depthyApp').provider('depthy', function depthy() {
           if (!self.state) throw 'No state to go to';
           $state.go(self.state, self.stateParams);
         },
-        // returns shareUrl
-        getShareUrl: function(followShares) {
-          if (self.sharedAs && followShares !== false) return self.sharedAs.getShareUrl(false);
-          if (!self.isShareable()) return false;
-          return depthy.rootShareUrl + self.getStateUrl();
-        },
-        getShareInfo: function(followShares) {
-          if (self.sharedAs && followShares !== false) return self.sharedAs.getShareInfo(false);
-          var url = self.getShareUrl(false);
-          if (!url) return null;
-          return {
-            url: url,
-            title: (self.title ? self.title + ' ' : '') + '#depthy',
-            img: self.thumb && (self.thumb.match(/^https?:/) ? self.thumb : depthy.rootShareUrl + self.thumb),
-          };
-        },
-        getShareImage: function() {
-          return self.sharedAs || self;
-        },
-        // creates new image, based on this one, and sets it as sharedAs
-        createShareImage: function(info) {
-          info = angular.extend({
-            sharedFrom: self,
-            title: self.title,
-            thumb: self.thumb,
-          }, info);
-          var share = lookupImageHistory(info, true);
-          self.sharedAs = share;
-          storeImageHistory();
-          updateImageGallery();
-          return share;
-        },
         markAsModified: function() {
-          // self.shareUrl = self.store = self.storeUrl = false;
           // it's no longer shared here!
-          self.sharedAs = null;
           self.modified = true;
         },
         onOpened: function() {
@@ -177,7 +133,6 @@ angular.module('depthyApp').provider('depthy', function depthy() {
           }
           self.viewed = new Date().getTime();
           self.views += 1;
-          updateImageGallery();
           storeImageHistory();
           $rootScope.$safeApply();
         },
@@ -256,20 +211,6 @@ angular.module('depthyApp').provider('depthy', function depthy() {
       return depthy.opened;
     }
 
-    function updateImageGallery() {
-      console.log('updateImageGallery');
-      var gallery = _.filter(history, function(image) {
-        return image.isConfirmed();
-      });
-
-      gallery.sort(function(a, b) {
-        if (a.added === b.added) return 0;
-        return a.added > b.added ? -1 : 1;
-      });
-
-      depthy.gallery = gallery;
-    }
-
     var storeImageHistory = _.throttle(function storeImageHistory() {
       if (!Modernizr.localstorage) return;
 
@@ -341,60 +282,16 @@ angular.module('depthyApp').provider('depthy', function depthy() {
       if (stored.version !== depthy.version) {
         installNewVersion(stored.version);
       }
-      showNewStuff();
 
       console.log('restoreSettings', stored);
-      //
-    }
-
-    function installNewVersion(old) {
-      console.log('New version %s -> %s', old, depthy.version);
-
-      // assume that new users know everything that is new...
-      if (!old) hideNewStuff();
-
-      storeSettings();
-    }
-
-    function showNewStuff() {
-      var newStuff = {
-        205: 'Export high quality videos on chrome.',
-        206: 'GIFs look waaay better now.',
-        300: 'Paint depthmaps in your browser.',
-        301: 'Save images as LensBlur JPG.',
-        302: 'Create anaglyph 3D images.',
-      };
-      depthy.newStuff = [];
-      _.each(newStuff, function(txt, v) {
-        if (v > (depthy.tipsState.newStuff || 0)) depthy.newStuff.push(txt);
-      });
-    }
-
-    function hideNewStuff() {
-      depthy.newStuff = [];
-      depthy.tipsState.newStuff = depthy.version;
-      storeSettings();
-    }
-
-    function checkUpdate() {
-      // force the update daily
-      UpdateCheck.check(depthy.storedDate && (new Date().getTime() - depthy.storedDate > 86400000)).then(function(found) {
-        if (found) depthy.gotUpdate = true;
-        storeSettings();
-      });
     }
 
     function initialize() {
-      $rootScope.$on('$stateChangeSuccess', function() {
-        depthy.zenMode = false;
-      });
 
       openImage(createImageInfo({empty: true}));
 
       restoreSettings();
-      checkUpdate();
       restoreImageHistory();
-      updateImageGallery();
 
       $rootScope.$watch(function() {
         var store = _.pick(depthy, _storeableDepthyKeys);
@@ -428,35 +325,24 @@ angular.module('depthyApp').provider('depthy', function depthy() {
 
       imgurId: 'b4ca5b16efb904b',
 
-      rootShareUrl: 'http://depthy.me/',
-      share: {
-        url: 'http://depthy.me/',
-      },
-
       // true - opened fully, 'gallery' opened on gallery
-      leftpaneOpened: false,
       activePopup: null,
 
       movearoundShow: false,
 
-      zenMode: false,
       drawMode: false,
 
       opened: null,
 
       useOriginalImage: false,
 
-      modalWait: 700,
       debug: false,
 
       gallery: [],
 
+      // the ide and name of the picture to be loaded
       samples: [
-        { id: 'flowers', title: 'Flowers'},
-        { id: 'hut', title: 'Hut'},
-        { id: 'shelf', title: 'Shelf'},
-        { id: 'mango', title: 'Mango'},
-        { id: 'tunnel', title: 'Tunnel'},
+        { id: 'teacup', title: 'Teacup'}
       ],
 
       stores: {
@@ -464,8 +350,6 @@ angular.module('depthyApp').provider('depthy', function depthy() {
           name: 'imgur'
         }
       },
-
-      downloadInstructions: Modernizr.adownload ? 'Click the image' : Modernizr.mobile ? 'Touch and hold the image' : 'Right-click the image',
 
       getVersion: function() {
         return Math.floor(this.version / 10000) + '.' + Math.floor(this.version % 10000 / 100) + '.' + (this.version % 100);
@@ -517,7 +401,6 @@ angular.module('depthyApp').provider('depthy', function depthy() {
       },
 
       storeSettings: storeSettings,
-      hideNewStuff: hideNewStuff,
 
       // sets proper image according to opened image and useOriginalImage setting
       refreshOpenedImage: function() {
@@ -722,76 +605,7 @@ angular.module('depthyApp').provider('depthy', function depthy() {
         return deferred.promise;
 
       },
-
-      exportGifAnimation: function() {
-        var deferred = $q.defer(), promise = deferred.promise, gif;
-        Modernizr.load({
-          test: window.GIF,
-          nope: 'bower_components/gif.js/dist/gif.js',
-          complete: function() {
-            var size = {width: depthy.exportSize, height: depthy.exportSize},
-                duration = viewer.animateDuration,
-                fps = Math.min(25, Math.max(8, (viewer.depthScale * (size < 300 ? 0.5 : 1) * 20) / duration)),
-                frames = Math.max(4, Math.round(duration * fps)),
-                delay = Math.round(duration * 1000 / frames),
-                viewerObj = depthy.getViewer(),
-                oldOptions = viewerObj.getOptions();
-
-            gif = new GIF({
-              workers: 4,
-              quality: 10,
-              workerScript: 'bower_components/gif.js/dist/gif.worker.js',
-              dither: true,
-              globalPalette: true,
-            });
-            console.log('FPS %d Frames %d Delay %d Scale %d Size %d Duration %d', fps, frames, delay, viewer.depthScale, depthy.exportSize, duration);
-
-            console.time('gif.addFrames');
-            for(var frame = 0; frame < frames; ++frame) {
-              viewerObj.setOptions({
-                size: size,
-                animate: true,
-                fit: false,
-                animatePosition: frame / frames,
-                quality: 5,
-                pauseRender: true,
-              });
-              viewerObj.render(true);
-              gif.addFrame(viewerObj.getCanvas(), {copy: true, delay: delay});
-            }
-            console.timeEnd('gif.addFrames');
-
-            gif.on('progress', function(p) {
-              deferred.notify(p);
-            });
-            gif.on('abort', function() {
-              promise.abort = function() {};
-              deferred.reject();
-            });
-            gif.on('finished', function(blob) {
-              promise.abort = function() {};
-              deferred.resolve(blob);
-              depthy.viewer.overrideStageSize = null;
-              $rootScope.$safeApply();
-            });
-
-            promise.finally(function() {
-              console.timeEnd('gif.render');
-              oldOptions.pauseRender = false;
-              viewerObj.setOptions(oldOptions);
-            });
-
-            console.time('gif.render');
-            gif.render();
-          }
-        });
-        promise.abort = function() {
-          gif.abort();
-        };
-        return promise;
-      },
-
-
+      
       exportWebmAnimation: function() {
         var deferred = $q.defer(), promise = deferred.promise, encoder, aborted = false;
 
@@ -862,7 +676,6 @@ angular.module('depthyApp').provider('depthy', function depthy() {
         return promise;
       },
 
-
       animateOption: function(obj, option, duration) {
         $(obj).animate(option, {
           duration: duration || 250,
@@ -873,87 +686,6 @@ angular.module('depthyApp').provider('depthy', function depthy() {
           }
         });
       },
-
-
-      isLeftpaneOpened: function() {
-        return this.leftpaneOpened || this.isFullLayout();
-      },
-
-      leftpaneToggle: function() {
-        if (depthy.leftpaneOpened) {
-          depthy.leftpaneClose();
-        } else {
-          depthy.leftpaneOpen();
-        }
-      },
-
-      leftpaneOpen: function(gallery) {
-        gallery = false;
-        depthy.zenMode = false;
-        if (this.isFullLayout()) return;
-        
-        if (!gallery && depthy.leftpaneOpen !== true && !leftpaneDeferred) {
-          if (depthy.activePopup) depthy.activePopup.reject();
-
-          leftpaneDeferred = StateModal.stateDeferred(true);
-          leftpaneDeferred.promise.finally(function() {
-            if (depthy.leftpaneOpened === true) depthy.leftpaneOpened = false;
-            leftpaneDeferred = null;
-          });
-        }
-        depthy.leftpaneOpened = gallery ? 'gallery' : true;
-      },
-
-      leftpaneClose: function() {
-        if (this.isFullLayout()) return;
-        if (leftpaneDeferred) {
-          if (depthy.leftpaneOpened === true) {
-            leftpaneDeferred.reject();
-          }
-          leftpaneDeferred = null;
-        }
-        depthy.leftpaneOpened = false;
-      },
-
-      openPopup: function(state, options) {
-        depthy.leftpaneClose();
-        depthy.activePopup = StateModal.stateDeferred(true, options);
-        depthy.activePopup.state = state;
-        depthy.activePopup.promise.finally(function() {
-          if (depthy.activePopup.state === state) depthy.activePopup = null;
-        });
-        return depthy.activePopup;
-      },
-
-      zenModeToggle: function() {
-        if (depthy.leftpaneOpened !== 'gallery') depthy.leftpaneClose();
-        if (!depthy.isReady() || !depthy.hasCompleteImage()) {
-          depthy.zenMode = false;
-          return;
-        }
-        depthy.zenMode = !depthy.zenMode;
-      },
-
-      drawModeEnable: function() {
-        if (depthy.drawMode) return;
-        depthy.leftpaneClose();
-        depthy.zenMode = true;
-        depthy.drawMode = new DepthyDrawer(depthy.getViewer());
-        // depthy.drawMode.oldOptions = angular.extend({}, depthy.viewer);
-        depthy.isViewerOverriden(true);
-        $timeout(function() {$($window).resize();});
-      },
-
-      drawModeDisable: function() {
-        if (!depthy.drawMode) return;
-        depthy.zenMode = false;
-        depthy.isViewerOverriden(false);
-        // depthy.extend(depthy.viewer, depthy.drawMode.oldOptions);
-        depthy.drawMode.destroy();
-        depthy.drawMode = false;
-        $timeout(function() {$($window).resize();});
-      },
-
 
       reload: function() {
         $window.location.reload();
@@ -968,14 +700,10 @@ angular.module('depthyApp').provider('depthy', function depthy() {
             depthy.getViewer().enableDebug();
           }
         });
-      },
-
-
+      }
     };
 
-
     initialize();
-
 
     return depthy;
   };

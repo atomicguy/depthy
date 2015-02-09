@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('depthyApp')
-.controller('MainCtrl', function ($rootScope, $window, $scope, $timeout, ga, depthy, $element, $modal, $state, StateModal) {
+.controller('MainCtrl', function ($rootScope, $window, $scope, $timeout, ga, depthy, $element, $state) {
 
   $rootScope.depthy = depthy;
   $rootScope.viewer = depthy.viewer; // shortcut
@@ -37,12 +37,10 @@ angular.module('depthyApp')
       depthy.loadLocalImage(files[0]).then(
         function() {
           ga('send', 'event', 'image', 'parsed', depthy.hasDepthmap() ? 'depthmap' : 'no-depthmap');
-          depthy.leftpaneClose();
           depthy.opened.openState();
         },
         function(e) {
           ga('send', 'event', 'image', 'error', e);
-          depthy.leftpaneClose();
         }
       );
     }

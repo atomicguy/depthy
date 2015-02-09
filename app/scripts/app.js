@@ -4,12 +4,7 @@ angular.module('depthyApp', [
   'ngAnimate',
   'ngTouch',
   'ga',
-  'shareUrls',
-  'ui.router',
-  'ui.bootstrap.buttons',
-  'ui.bootstrap.modal',
-  'ui.bootstrap.transition',
-  'ui.bootstrap.dropdown'
+  'ui.router'
 ])
 //fix blob
 .config(function($compileProvider) {
@@ -23,7 +18,7 @@ angular.module('depthyApp', [
   .state('index', {
     url: '/',
     onEnter: ['depthy', '$state', function (depthy, $state) {
-      depthy.loadSampleImage('flowers');
+      depthy.loadSampleImage('teacup');
     }]
   });
 })
