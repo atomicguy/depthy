@@ -7,7 +7,6 @@ angular.module('depthyApp')
   $rootScope.viewer = depthy.viewer; // shortcut
   $rootScope.Modernizr = window.Modernizr;
   $rootScope.Math = window.Math;
-  $rootScope.screenfull = screenfull;
 
   $scope.version = depthy.getVersion();
 
@@ -79,22 +78,4 @@ angular.module('depthyApp')
     $scope.$safeApply();
   });
   $($window).resize();
-
-  $timeout(function() {
-    $scope.scroll = new IScroll('#leftpane', {
-      mouseWheel: true,
-      scrollbars: 'custom',
-      click: false,
-      fadeScrollbars: true,
-      interactiveScrollbars: true,
-      resizeScrollbars: false,
-      eventPassthrough: 'horizontal',
-    });
-    // refresh on every digest...
-    $scope.$watch(function() {
-      setTimeout(function() {
-        $scope.scroll.refresh();
-      }, 100);
-    });
-  });
 });

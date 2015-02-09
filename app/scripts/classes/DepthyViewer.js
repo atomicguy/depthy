@@ -203,13 +203,14 @@ Copyright (c) 2014 Rafał Lindemann. http://panrafal.github.com/depthy
         depthBlurFilter = createDepthBlurFilter();
         grayscaleFilter = createGrayscaleFilter();
       } catch (e) {
+        // TODO: Depthy only works on browsers which accepts WebGL
+        // When using it in production, we have to catch the exception and display
+        // a normal picture instead of the fancy stuff
         console.error('WebGL failed', e);
         renderer = false;
         if (Modernizr) Modernizr.webgl = false;
       }
-
     }
-
 
     function createDiscardAlphaFilter(alphaConst) {
       var filter = new PIXI.ColorMatrixFilter2();

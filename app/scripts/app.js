@@ -1,7 +1,6 @@
 'use strict';
 
 angular.module('depthyApp', [
-  'ngAnimate',
   'ngTouch',
   'ga',
   'ui.router'
