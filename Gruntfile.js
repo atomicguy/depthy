@@ -1,12 +1,6 @@
 // Generated on 2014-04-18 using generator-angular 0.8.0
 'use strict';
 
-// # Globbing
-// for performance reasons we're only matching one level down:
-// 'test/spec/{,*/}*.js'
-// use this if you want to recursively match all subfolders:
-// 'test/spec/**/*.js'
-
 module.exports = function (grunt) {
 
   // Load grunt tasks automatically
@@ -37,10 +31,6 @@ module.exports = function (grunt) {
         options: {
           livereload: true
         }
-      },
-      jsTest: {
-        files: ['test/spec/{,*/}*.js'],
-        tasks: ['newer:jshint:test', 'karma']
       },
       compass: {
         files: ['<%= yeoman.app %>/styles/{,*/}*.{scss,sass}'],
@@ -86,16 +76,6 @@ module.exports = function (grunt) {
           ]
         }
       },
-      test: {
-        options: {
-          port: 9001,
-          base: [
-            '.tmp',
-            'test',
-            '<%= yeoman.app %>'
-          ]
-        }
-      },
       dist: {
         options: {
           base: '<%= yeoman.dist %>'
@@ -113,12 +93,6 @@ module.exports = function (grunt) {
         'Gruntfile.js',
         '<%= yeoman.app %>/scripts/{,*/}*.js'
       ],
-      test: {
-        options: {
-          jshintrc: 'test/.jshintrc'
-        },
-        src: ['test/spec/{,*/}*.js']
-      }
     },
 
     // Empties folders to start fresh
@@ -391,9 +365,6 @@ module.exports = function (grunt) {
         'compass:server',
         'svgmin',
       ],
-      test: [
-        'compass'
-      ],
       dist: [
         'compass:dist',
         'imagemin',
@@ -443,14 +414,6 @@ module.exports = function (grunt) {
         dest: '<%= yeoman.dist %>/manifest.appcache'
       }
     },
-
-    // Test settings
-    karma: {
-      unit: {
-        configFile: 'karma.conf.js',
-        // singleRun: true
-      }
-    }
   });
 
 
@@ -475,14 +438,6 @@ module.exports = function (grunt) {
     grunt.task.run(['serve:' + target]);
   });
 
-  grunt.registerTask('test', [
-    'clean:server',
-    'concurrent:test',
-    'autoprefixer',
-    'connect:test',
-    'karma'
-  ]);
-
   grunt.registerTask('build', [
     'clean:dist',
     // 'bowerInstall',
@@ -503,8 +458,6 @@ module.exports = function (grunt) {
   ]);
 
   grunt.registerTask('default', [
-    'newer:jshint',
-    'test',
     'build'
   ]);
 };

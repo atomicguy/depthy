@@ -6,8 +6,6 @@
     "angular-animate": "~1.2.16",
     "angular-ga": "~0.1.0",
     "angular-motion": "~0.3.2",
-    "angular-sanitize": "~1.2.16",
-    "angular-strap": "~2.0.1",
     "angular-touch": "~1.2.16",
     "angular-ui-bootstrap": "~0.11.0",
     "angular-ui-router": "~0.2.10",
@@ -23,10 +21,6 @@
     "iscroll": "~5.1.1",
     "stats.js": "*",
     "whammy": "antimatter15/whammy"
-  },
-  "devDependencies": {
-    "angular-mocks": "1.2.15",
-    "angular-scenario": "1.2.15"
   },
   "resolutions": {
     "angular": "~1.2.16"
