@@ -340,7 +340,7 @@ angular.module('depthyApp').provider('depthy', function depthy() {
 
       gallery: [],
 
-      // the ide and name of the picture to be loaded
+      // the id and name of the picture to be loaded
       samples: [
         { id: 'teacup', title: 'Teacup'}
       ],
