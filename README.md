@@ -1,6 +1,12 @@
 DEPTHY
 ======
 
+This project is just a stripped version of the original Depthy, which contains some cool features about creating your own DOF pictures, exporting files and sharing.
+
+In this version, we only care about showing a given picture with the fancy paralax effect presented by Depthy
+
+---
+
 Images with depthmap playground.
 
 Depthy shows Google Camera Lens Blur photos with 3D parallax effect and creates animated GIFs from them. Plus extracts the depth map and enables you to create your own!
@@ -15,6 +21,31 @@ This is the source of the http://depthy.me/ webapp. Contributions more than welc
 - For local development server run: `grunt serve`
 - For deployment: `grunt build`
 
+## How to use your own pictures
+
+1. Under the folder `app/samples` place the picture and its corresponding depth of field picture with the following names:
+
+  - \<name\>-image.jpg
+  - \<name\>-depth.jpg
+
+2. Change the samples attribute of the depthy script. It's located at `app/scripts/services/depthy.js`. It should be something like this:
+
+  ```js
+    // the id and name of the picture to be loaded
+    // this id is the <name> you have named your pictures in the previous step
+    samples: [
+      { id: 'name', title: 'Name'}
+    ],
+  ```
+    
+3. Change the name of the image firstly loaded on `app/scripts/app.js`, with the id you'd chosen for your picture.
+
+  ```js
+    onEnter: ['depthy', '$state', function (depthy, $state) {
+      depthy.loadSampleImage('name');
+    }]
+  ```
+  
 ## Authors
 
 **[Rafał Lindemann](http://www.stamina.pl/)** (idea, code, ux) with much appreciated help of
